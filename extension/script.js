@@ -9,14 +9,16 @@ XMLHttpRequest.prototype.open = function (method, url, async) {
 
 function getQueryVariable(url) {
   var vars = url.split('&');
-  var pair;
+  var query;
 
-  for (var i = vars.length-1; i > 0 ; i--) {
-    pair = vars[i].split('=');
+  vars.forEach(function(v){
+    var pair = v.split('=');
     if (decodeURIComponent(pair[0]) == 'q') {
-      return decodeURIComponent(pair[1]);
+      query = decodeURIComponent(pair[1]);
     }
-  }
+  });
+
+  return query;
 }
 
 function search(url) {
@@ -26,11 +28,9 @@ function search(url) {
     q: getQueryVariable(url)
   });
 
-  get(endpoint, function (response) {
-    if(response.items) {
-      processResults(response.items);
-    }
-  });
+  console.log(endpoint);
+
+  get(endpoint, processResults);
 }
 
 function buildUrl(basePath, variables){
@@ -39,7 +39,31 @@ function buildUrl(basePath, variables){
     url += key + "=" + variables[key] + "&";
   }
 
-  return url;
+  return url.slice(0,-1);
+}
+
+function processResults(response){
+  if(!response.items) return;
+
+  var html = buildFragment(response.items);
+  element("#center_col").insertBefore(html,element("#res"));
+}
+
+function buildFragment(items){
+  var fragment = document.createDocumentFragment();
+
+  items.forEach(function(item){
+    fragment.appendChild(buildItem(item.title, item.link, item.snippet));
+  });
+
+  return fragment;
+}
+
+function buildItem(title, url, description){
+  var div = document.createElement("div");
+  div.innerHTML = "<a href='" + url + "'>" + title +"</a>";
+
+  return div;
 }
 
 function get(url, data, callback){
@@ -53,17 +77,12 @@ function get(url, data, callback){
   xhr.setRequestHeader("Content-Type","application/json");
   xhr.send(JSON.stringify(data));
   xhr.onreadystatechange = function() {
-    callback(xhr.responseText, xhr.statusCode);
+    var responseObject = JSON.parse(xhr.responseText);
+    callback(responseObject, xhr.statusCode);
   };
 }
 
-function processResults(items){
-  for (var i = 0; i < items.length; i++) {
-    addResultToPage(items[i].title, items[i].link, items[i].snippet);
-  }
-}
-
-function addResultToPage(title, url, description) {
-  $("#ires .srg").prepend("<div><a href=" + url + ">" + title +"</a></div>");
-  // console.log(title)
+function element(selector){
+  var result = document.querySelectorAll(selector);
+  return (result.length === 1) ? result[0] : result;
 }
