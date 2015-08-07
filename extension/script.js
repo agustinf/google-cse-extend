@@ -2,10 +2,19 @@
 var open = XMLHttpRequest.prototype.open;
 XMLHttpRequest.prototype.open = function (method, url, async) {
   if(url.indexOf('/search?') === 0) {
+    if(!inserted) insertWrapper();
     search(url);
   }
   open.call(this, method, url, true);
 };
+
+var inserted = false;
+var wrapper = document.createElement("div");
+
+function insertWrapper(){
+  inserted = true;
+  element("#res").insertBefore(wrapper, element("#search"))
+}
 
 function getQueryVariable(url) {
   var vars = url.split('&');
@@ -28,8 +37,6 @@ function search(url) {
     q: getQueryVariable(url)
   });
 
-  console.log(endpoint);
-
   get(endpoint, processResults);
 }
 
@@ -44,25 +51,20 @@ function buildUrl(basePath, variables){
 
 function processResults(response){
   if(!response.items) return;
-
-  var html = buildFragment(response.items);
-  element("#center_col").insertBefore(html,element("#res"));
+  wrapper.innerHTML = buildWrapper(response.items).innerHTML;
 }
 
-function buildFragment(items){
-  var fragment = document.createDocumentFragment();
-
-  items.forEach(function(item){
-    fragment.appendChild(buildItem(item.title, item.link, item.snippet));
-  });
-
-  return fragment;
-}
-
-function buildItem(title, url, description){
+function buildWrapper(items){
   var div = document.createElement("div");
-  div.innerHTML = "<a href='" + url + "'>" + title +"</a>";
+  div.appendChild(buildItem(items[0]));
+  return div;
+}
 
+function buildItem(item){
+  var div = document.createElement("div");
+  div.innerHTML = '<h3 class="r"><a href="' + item.link + '">' + item.title +"</a></h3>";
+  div.innerHTML += '<b class="_Rm a">' + item.htmlFormattedUrl + "</b>";
+  div.innerHTML += '<div class="s g"><span class="st">' + item.snippet + '</span></div>';
   return div;
 }
 
