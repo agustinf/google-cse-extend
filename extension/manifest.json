@@ -3,6 +3,7 @@
   "name": "Simultaneous Custom Search",
   "version": "0.0.1",
   "description": "Simultaneous Custom Search lets you search both Google and a Google Custom Search.",
+  "web_accessible_resources":["script.js"],
   "content_scripts": [
     {
       "run_at": "document_end",
